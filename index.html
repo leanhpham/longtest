@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sổ theo dõi hồ sơ pháp chế</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16233F;
+    --paper:#EEF0EA;
+    --card:#FFFFFF;
+    --line:#D9DAD2;
+    --line-soft:#E6E7E0;
+    --muted:#6B6F66;
+    --accent:#0F6B5C;
+    --accent-dark:#0A4F44;
+    --accent-tint:#DDEDE9;
+    --red:#B3261E;
+    --red-tint:#F8DEDC;
+    --amber:#946200;
+    --amber-tint:#FBEBC9;
+    --green:#2E7D46;
+    --green-tint:#DFEEE2;
+    --gray-done:#5B6270;
+    --gray-tint:#E6E7EA;
+    --serif:'Source Serif 4', Georgia, serif;
+    --sans:'IBM Plex Sans', -apple-system, sans-serif;
+    --mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); font-size:14px; line-height:1.5;
+  }
+  ::selection{background:var(--accent-tint);}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    background:var(--ink); color:#fff;
+    padding:22px 28px 20px;
+    display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  .brand h1{
+    font-family:var(--serif); font-weight:600; font-size:23px; margin:0 0 3px;
+    letter-spacing:.2px;
+  }
+  .brand p{margin:0; font-size:12.5px; color:#B9C2CE; font-family:var(--mono); letter-spacing:.3px;}
+  .top-actions{display:flex; gap:10px; align-items:center;}
+  .btn{
+    font-family:var(--sans); font-size:13.5px; font-weight:500; cursor:pointer;
+    border-radius:6px; padding:9px 15px; border:1px solid transparent;
+    display:inline-flex; align-items:center; gap:7px; white-space:nowrap;
+    transition:background .12s, border-color .12s;
+  }
+  .btn-primary{background:var(--accent); color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-ghost-dark{background:rgba(255,255,255,0.08); color:#fff; border-color:rgba(255,255,255,0.25);}
+  .btn-ghost-dark:hover{background:rgba(255,255,255,0.16);}
+  .btn-ghost{background:transparent; color:var(--ink); border-color:var(--line);}
+  .btn-ghost:hover{background:var(--line-soft);}
+  .btn-danger-text{background:transparent; color:var(--red); border-color:transparent; padding:6px 8px;}
+  .btn-danger-text:hover{background:var(--red-tint);}
+  .icon{width:15px; height:15px; flex:none;}
+
+  /* ---------- Layout ---------- */
+  .layout{display:flex; align-items:flex-start; gap:0; max-width:1400px; margin:0 auto;}
+  .rail{
+    width:200px; flex:none; padding:22px 14px 40px 28px;
+    position:sticky; top:0;
+  }
+  .rail-group{margin-bottom:26px;}
+  .rail-label{
+    font-family:var(--mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.8px;
+    color:var(--muted); margin:0 0 8px 2px;
+  }
+  .tab{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:8px 10px; border-radius:5px; cursor:pointer; margin-bottom:2px;
+    font-size:13.5px; color:var(--ink);
+  }
+  .tab:hover{background:var(--line-soft);}
+  .tab.active{background:var(--card); border:1px solid var(--line); font-weight:500;}
+  .tab .count{font-family:var(--mono); font-size:11.5px; color:var(--muted);}
+  .tab.active .count{color:var(--ink);}
+  .dot{width:7px; height:7px; border-radius:50%; flex:none; margin-right:7px;}
+  .tab-inner{display:flex; align-items:center;}
+
+  .main{flex:1; min-width:0; padding:22px 28px 60px;}
+  .toolbar{display:flex; gap:10px; align-items:center; margin-bottom:16px; flex-wrap:wrap;}
+  .search-wrap{position:relative; flex:1; min-width:220px; max-width:360px;}
+  .search-wrap input{
+    width:100%; padding:9px 12px 9px 34px; border:1px solid var(--line); border-radius:6px;
+    background:var(--card); font-family:var(--sans); font-size:13.5px; color:var(--ink);
+  }
+  .search-wrap input:focus{outline:2px solid var(--accent-tint); border-color:var(--accent);}
+  .search-wrap svg{position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--muted);}
+  .toolbar-spacer{flex:1;}
+  .result-count{font-family:var(--mono); font-size:12px; color:var(--muted);}
+
+  /* ---------- Table ---------- */
+  .table-card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden;
+  }
+  .table-scroll{overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; min-width:1180px;}
+  thead th{
+    text-align:left; font-family:var(--mono); font-size:11px; text-transform:uppercase;
+    letter-spacing:.5px; color:var(--muted); font-weight:500;
+    padding:11px 12px; border-bottom:1px solid var(--line); background:#FAFAF7;
+    white-space:nowrap;
+  }
+  tbody td{
+    padding:12px; border-bottom:1px solid var(--line-soft); vertical-align:top; font-size:13.5px;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:#FBFBF9;}
+  tbody tr.overdue{background:#FDF6F5;}
+  tbody tr.overdue:hover{background:#FBEEED;}
+  .doc-name{font-weight:500; color:var(--ink); margin:0 0 2px;}
+  .doc-sub{font-size:12px; color:var(--muted);}
+  .unit-tag{
+    font-family:var(--mono); font-size:11.5px; font-weight:500; padding:3px 7px;
+    border-radius:4px; background:var(--gray-tint); color:var(--ink); white-space:nowrap;
+  }
+  .date-mono{font-family:var(--mono); font-size:12.5px; color:var(--ink); white-space:nowrap;}
+  .date-mono.overdue-text{color:var(--red); font-weight:500;}
+  select.progress-select{
+    font-family:var(--sans); font-size:12.5px; padding:6px 8px; border-radius:5px;
+    border:1px solid var(--line); background:var(--card); color:var(--ink); max-width:170px;
+  }
+  .base-link{color:var(--accent); text-decoration:none; font-size:12.5px; display:inline-flex; align-items:center; gap:4px;}
+  .base-link:hover{text-decoration:underline;}
+  .note-cell{color:var(--muted); font-size:12.5px; max-width:160px;}
+  .row-actions{display:flex; gap:2px; justify-content:flex-end;}
+  .row-btn{
+    background:transparent; border:none; cursor:pointer; padding:6px; border-radius:5px;
+    color:var(--muted); display:inline-flex;
+  }
+  .row-btn:hover{background:var(--line-soft); color:var(--ink);}
+
+  /* Seal badge (signature element) */
+  .seal{
+    width:52px; height:52px; border-radius:50%;
+    border:1.6px solid currentColor; position:relative;
+    display:flex; align-items:center; justify-content:center;
+    transform:rotate(-8deg);
+  }
+  .seal::before{
+    content:''; position:absolute; inset:4px; border-radius:50%; border:1px solid currentColor; opacity:.55;
+  }
+  .seal span{
+    font-family:var(--serif); font-weight:700; font-size:9.5px; letter-spacing:.3px;
+    text-align:center; line-height:1.15; padding:0 4px;
+  }
+  .seal.qh{color:var(--red);}
+  .seal.sd{color:var(--amber);}
+  .seal.ch{color:var(--green);}
+  .seal.ht{color:var(--gray-done);}
+  .seal-wrap{display:flex; flex-direction:column; align-items:center; gap:3px;}
+  .seal-days{font-family:var(--mono); font-size:10.5px; color:var(--muted);}
+
+  .empty{padding:60px 20px; text-align:center;}
+  .empty h3{font-family:var(--serif); font-weight:600; font-size:17px; margin:0 0 6px;}
+  .empty p{color:var(--muted); margin:0 0 16px; font-size:13.5px;}
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(22,35,63,0.45); z-index:50;
+    display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto;
+  }
+  .modal{
+    background:var(--card); border-radius:12px; width:100%; max-width:560px;
+    border:1px solid var(--line); box-shadow:0 12px 40px rgba(22,35,63,0.18);
+  }
+  .modal-head{
+    padding:18px 22px; border-bottom:1px solid var(--line-soft);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .modal-head h2{font-family:var(--serif); font-weight:600; font-size:18px; margin:0;}
+  .modal-body{padding:20px 22px; display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .field{display:flex; flex-direction:column; gap:5px;}
+  .field.full{grid-column:1 / -1;}
+  .field label{font-size:12px; font-weight:500; color:var(--muted);}
+  .field input, .field select, .field textarea{
+    font-family:var(--sans); font-size:13.5px; padding:9px 10px; border:1px solid var(--line);
+    border-radius:6px; background:var(--card); color:var(--ink); width:100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--accent-tint); border-color:var(--accent);}
+  .field textarea{resize:vertical; min-height:56px; font-family:var(--sans);}
+  .field-hint{font-size:11px; color:var(--muted);}
+  .field-error{font-size:11.5px; color:var(--red);}
+  .modal-foot{
+    padding:16px 22px; border-top:1px solid var(--line-soft); display:flex; justify-content:flex-end; gap:10px;
+  }
+  .close-x{background:transparent; border:none; cursor:pointer; color:var(--muted); padding:4px; border-radius:5px;}
+  .close-x:hover{background:var(--line-soft); color:var(--ink);}
+
+  /* Settings modal */
+  .taglist{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+  .tag{
+    display:inline-flex; align-items:center; gap:6px; background:var(--accent-tint); color:var(--accent-dark);
+    border-radius:5px; padding:5px 9px; font-size:12.5px; font-weight:500;
+  }
+  .tag button{background:none; border:none; cursor:pointer; color:var(--accent-dark); display:flex; padding:0;}
+  .add-tag-row{display:flex; gap:8px; margin-top:10px;}
+  .add-tag-row input{flex:1;}
+  .settings-section{margin-bottom:22px;}
+  .settings-section h3{font-family:var(--serif); font-size:14.5px; font-weight:600; margin:0 0 4px;}
+  .settings-section p{font-size:12px; color:var(--muted); margin:0;}
+
+  .loading-state{padding:80px 20px; text-align:center; color:var(--muted); font-size:13.5px;}
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff;
+    padding:10px 18px; border-radius:7px; font-size:13px; z-index:80; opacity:0; pointer-events:none;
+    transition:opacity .2s, transform .2s;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px);}
+
+  @media (max-width: 880px){
+    .layout{flex-direction:column;}
+    .rail{
+      position:static; width:100%; padding:14px 16px 6px; display:flex; gap:22px; overflow-x:auto;
+    }
+    .rail-group{margin-bottom:0; flex:none;}
+    .tab{white-space:nowrap;}
+    .main{padding:16px;}
+    .modal-body{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <h1>Sổ theo dõi hồ sơ pháp chế</h1>
+    <p>KLC GROUP · VIỆT LONG FINANCIAL INVESTMENT JSC</p>
+  </div>
+  <div class="top-actions">
+    <button class="btn btn-ghost-dark" id="btnSettings">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Danh mục
+    </button>
+    <button class="btn btn-primary" id="btnAdd">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Thêm hồ sơ
+    </button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="rail">
+    <div class="rail-group">
+      <p class="rail-label">Đơn vị</p>
+      <div id="railUnits"></div>
+    </div>
+    <div class="rail-group">
+      <p class="rail-label">Trạng thái hạn</p>
+      <div id="railStatus"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="searchBox" placeholder="Tìm theo tên văn bản, người phụ trách...">
+      </div>
+      <div class="toolbar-spacer"></div>
+      <div class="result-count" id="resultCount"></div>
+    </div>
+
+    <div class="table-card">
+      <div id="tableArea" class="loading-state">Đang tải dữ liệu...</div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const STORAGE_KEY = 'contract-records';
+const DANHMUC_KEY = 'contract-danhmuc';
+
+const DEFAULT_DANHMUC = {
+  donVi: ["KLCHS","KLCCN","KLC Energy","KLC Holidays Phú Quốc","KLC Vietnam Agricultural JSC","Việt Long Financial Investment JSC","Khác"],
+  nguoi: ["Long Nguyễn"],
+  tienTrinh: ["Chưa xử lý","Đang review lần 1","Đang review lần 2","Chờ đối tác phản hồi","Chờ ký nội bộ","Đã ký","Hủy/Dừng"]
+};
+
+const DONE_STATES = ["Đã ký","Hủy/Dừng"];
+
+let records = [];
+let danhMuc = JSON.parse(JSON.stringify(DEFAULT_DANHMUC));
+let currentUnit = "Tất cả";
+let currentStatus = "Tất cả";
+let searchTerm = "";
+let editingId = null;
+let dataReady = false;
+
+function uid(){ return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function todayStr(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function addDays(dateStr, n){
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0,10);
+}
+function dayDiff(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  const t = new Date(todayStr() + 'T00:00:00');
+  return Math.round((d - t) / 86400000);
+}
+function fmtDate(s){
+  if(!s) return '—';
+  const [y,m,d] = s.split('-');
+  return `${d}/${m}/${y}`;
+}
+function escapeHtml(s){
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._h);
+  showToast._h = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+function statusOf(rec){
+  if(!rec.hanXuLy) return {key:'chua', label:'Chưa đặt hạn', color:'gray-done'};
+  if(DONE_STATES.includes(rec.tienTrinh) || rec.tienTrinh === 'Đã ký'){
+    return {key:'ht', label:'Hoàn tất', code:'HT', days:null};
+  }
+  const diff = dayDiff(rec.hanXuLy);
+  if(diff < 0) return {key:'qh', label:'Quá hạn', code:'QH', days:diff};
+  if(diff <= 1) return {key:'sd', label:'Sắp đến hạn', code:'SĐ', days:diff};
+  return {key:'ch', label:'Còn hạn', code:'CH', days:diff};
+}
+
+async function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    records = raw ? JSON.parse(raw) : null;
+  }catch(e){ records = null; }
+  if(!records){
+    records = [{
+      id: uid(), donVi:"KLCHS", loaiVanBan:"Hợp đồng",
+      tenVanBan:"HĐ dịch vụ bảo vệ phòng thí nghiệm tại Sông Cầu",
+      nguoiTao:"Phan Thị Việt Hiền", ngayTao: todayStr(),
+      hanXuLy: addDays(todayStr(), 2), nguoiPhuTrach:"Long Nguyễn",
+      tienTrinh:"Đang review lần 1", linkBase:"", ghiChu:"Hồ sơ ví dụ - có thể xóa"
+    }];
+    await saveRecords();
+  }
+  try{
+    const raw = localStorage.getItem(DANHMUC_KEY);
+    if(raw) danhMuc = JSON.parse(raw);
+    else await saveDanhMuc();
+  }catch(e){ /* keep defaults */ }
+  dataReady = true;
+}
+
+async function saveRecords(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  }catch(e){ showToast('Không lưu được dữ liệu, thử lại sau.'); }
+}
+async function saveDanhMuc(){
+  try{
+    localStorage.setItem(DANHMUC_KEY, JSON.stringify(danhMuc));
+  }catch(e){ showToast('Không lưu được danh mục, thử lại sau.'); }
+}
+
+function renderRail(){
+  const unitCounts = {};
+  records.forEach(r => unitCounts[r.donVi] = (unitCounts[r.donVi]||0)+1);
+  const units = ["Tất cả", ...danhMuc.donVi];
+  document.getElementById('railUnits').innerHTML = units.map(u => {
+    const count = u === "Tất cả" ? records.length : (unitCounts[u]||0);
+    return `<div class="tab ${currentUnit===u?'active':''}" data-unit="${escapeHtml(u)}">
+      <span>${escapeHtml(u)}</span><span class="count">${count}</span>
+    </div>`;
+  }).join('');
+
+  const statusDefs = [
+    {key:'Tất cả', label:'Tất cả', color:null},
+    {key:'qh', label:'Quá hạn', color:'var(--red)'},
+    {key:'sd', label:'Sắp đến hạn', color:'var(--amber)'},
+    {key:'ch', label:'Còn hạn', color:'var(--green)'},
+    {key:'ht', label:'Hoàn tất', color:'var(--gray-done)'}
+  ];
+  const statusCounts = {qh:0, sd:0, ch:0, ht:0};
+  records.forEach(r => { const s = statusOf(r); if(statusCounts[s.key]!==undefined) statusCounts[s.key]++; });
+  document.getElementById('railStatus').innerHTML = statusDefs.map(s => {
+    const count = s.key === 'Tất cả' ? records.length : statusCounts[s.key];
+    return `<div class="tab ${currentStatus===s.key?'active':''}" data-status="${s.key}">
+      <span class="tab-inner">${s.color?`<span class="dot" style="background:${s.color}"></span>`:''}${escapeHtml(s.label)}</span>
+      <span class="count">${count}</span>
+    </div>`;
+  }).join('');
+
+  document.querySelectorAll('[data-unit]').forEach(el => el.onclick = () => { currentUnit = el.dataset.unit; renderAll(); });
+  document.querySelectorAll('[data-status]').forEach(el => el.onclick = () => { currentStatus = el.dataset.status; renderAll(); });
+}
+
+function filteredRecords(){
+  return records.filter(r => {
+    if(currentUnit !== "Tất cả" && r.donVi !== currentUnit) return false;
+    if(currentStatus !== "Tất cả" && statusOf(r).key !== currentStatus) return false;
+    if(searchTerm){
+      const hay = (r.tenVanBan + ' ' + r.nguoiPhuTrach + ' ' + r.nguoiTao).toLowerCase();
+      if(!hay.includes(searchTerm.toLowerCase())) return false;
+    }
+    return true;
+  }).sort((a,b) => {
+    const sa = statusOf(a), sb = statusOf(b);
+    const order = {qh:0, sd:1, ch:2, chua:3, ht:4};
+    if(order[sa.key] !== order[sb.key]) return order[sa.key] - order[sb.key];
+    return (a.hanXuLy || '').localeCompare(b.hanXuLy || '');
+  });
+}
+
+function renderTable(){
+  const list = filteredRecords();
+  document.getElementById('resultCount').textContent = `${list.length} / ${records.length} hồ sơ`;
+  const area = document.getElementById('tableArea');
+
+  if(records.length === 0){
+    area.innerHTML = `<div class="empty">
+      <h3>Chưa có hồ sơ nào</h3>
+      <p>Thêm hồ sơ đầu tiên để bắt đầu theo dõi tiến độ rà soát.</p>
+      <button class="btn btn-primary" id="emptyAddBtn" style="margin:0 auto;">Thêm hồ sơ</button>
+    </div>`;
+    document.getElementById('emptyAddBtn').onclick = openAddModal;
+    return;
+  }
+  if(list.length === 0){
+    area.innerHTML = `<div class="empty">
+      <h3>Không tìm thấy hồ sơ phù hợp</h3>
+      <p>Thử đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
+    </div>`;
+    return;
+  }
+
+  const rows = list.map(r => {
+    const s = statusOf(r);
+    const progressOptions = danhMuc.tienTrinh.map(t =>
+      `<option value="${escapeHtml(t)}" ${r.tienTrinh===t?'selected':''}>${escapeHtml(t)}</option>`).join('');
+    const sealDays = s.key==='qh' ? `${Math.abs(s.days)} ngày trễ` : s.key==='sd' ? (s.days===0?'Hôm nay':'Còn 1 ngày') : s.key==='ch' ? `Còn ${s.days} ngày` : '';
+    return `<tr class="${s.key==='qh'?'overdue':''}" data-id="${r.id}">
+      <td><span class="unit-tag">${escapeHtml(r.donVi)}</span></td>
+      <td>
+        <p class="doc-name">${escapeHtml(r.tenVanBan)}</p>
+        <p class="doc-sub">${escapeHtml(r.loaiVanBan)} · Tạo bởi ${escapeHtml(r.nguoiTao || '—')}</p>
+      </td>
+      <td><span class="date-mono">${fmtDate(r.ngayTao)}</span></td>
+      <td><span class="date-mono ${s.key==='qh'?'overdue-text':''}">${fmtDate(r.hanXuLy)}</span></td>
+      <td>${escapeHtml(r.nguoiPhuTrach || '—')}</td>
+      <td><select class="progress-select" data-id="${r.id}">${progressOptions}</select></td>
+      <td>
+        <div class="seal-wrap">
+          <div class="seal ${s.key}"><span>${s.code || (r.hanXuLy?'':'—')}</span></div>
+          <span class="seal-days">${escapeHtml(sealDays)}</span>
+        </div>
+      </td>
+      <td>${r.linkBase ? `<a class="base-link" href="${escapeHtml(r.linkBase)}" target="_blank" rel="noopener"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14 21 3"/></svg>Base</a>` : '<span class="note-cell">—</span>'}</td>
+      <td><span class="note-cell">${escapeHtml(r.ghiChu || '')}</span></td>
+      <td>
+        <div class="row-actions">
+          <button class="row-btn" data-edit="${r.id}" aria-label="Sửa"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg></button>
+          <button class="row-btn" data-del="${r.id}" aria-label="Xóa"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  area.innerHTML = `<div class="table-scroll"><table>
+    <thead><tr>
+      <th>Đơn vị</th><th>Văn bản</th><th>Ngày tạo</th><th>Hạn xử lý</th>
+      <th>Người phụ trách</th><th>Tiến trình</th><th>Trạng thái</th><th>Link</th><th>Ghi chú</th><th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+
+  document.querySelectorAll('.progress-select').forEach(sel => {
+    sel.onchange = async () => {
+      const rec = records.find(r => r.id === sel.dataset.id);
+      rec.tienTrinh = sel.value;
+      await saveRecords();
+      renderAll();
+      showToast('Đã cập nhật tiến trình');
+    };
+  });
+  document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openEditModal(b.dataset.edit));
+  document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => deleteRecord(b.dataset.del));
+}
+
+function renderAll(){
+  if(!dataReady) return;
+  renderRail();
+  renderTable();
+}
+
+async function deleteRecord(id){
+  const rec = records.find(r => r.id === id);
+  if(!rec) return;
+  if(!confirm(`Xóa hồ sơ "${rec.tenVanBan}"?`)) return;
+  records = records.filter(r => r.id !== id);
+  await saveRecords();
+  renderAll();
+  showToast('Đã xóa hồ sơ');
+}
+
+/* ---------- Add / Edit modal ---------- */
+function unitOptions(sel){ return danhMuc.donVi.map(u => `<option value="${escapeHtml(u)}" ${sel===u?'selected':''}>${escapeHtml(u)}</option>`).join(''); }
+function personOptions(sel){ return danhMuc.nguoi.map(p => `<option value="${escapeHtml(p)}" ${sel===p?'selected':''}>${escapeHtml(p)}</option>`).join(''); }
+function progressOptionsAll(sel){ return danhMuc.tienTrinh.map(t => `<option value="${escapeHtml(t)}" ${sel===t?'selected':''}>${escapeHtml(t)}</option>`).join(''); }
+
+function openAddModal(){ editingId = null; openRecordModal(); }
+function openEditModal(id){ editingId = id; openRecordModal(records.find(r => r.id === id)); }
+
+function openRecordModal(rec){
+  const isEdit = !!rec;
+  const v = rec || { donVi: danhMuc.donVi[0], loaiVanBan:'Hợp đồng', tenVanBan:'', nguoiTao:'',
+    ngayTao: todayStr(), hanXuLy:'', nguoiPhuTrach: danhMuc.nguoi[0]||'', tienTrinh: danhMuc.tienTrinh[0],
+    linkBase:'', ghiChu:'' };
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `<div class="modal">
+    <div class="modal-head">
+      <h2>${isEdit ? 'Sửa hồ sơ' : 'Thêm hồ sơ mới'}</h2>
+      <button class="close-x" id="mClose" aria-label="Đóng"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Đơn vị yêu cầu</label><select id="fDonVi">${unitOptions(v.donVi)}</select></div>
+      <div class="field"><label>Loại văn bản</label>
+        <select id="fLoai">
+          <option ${v.loaiVanBan==='Hợp đồng'?'selected':''}>Hợp đồng</option>
+          <option ${v.loaiVanBan==='Phụ lục'?'selected':''}>Phụ lục</option>
+          <option ${v.loaiVanBan==='Văn bản khác'?'selected':''}>Văn bản khác</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>Tên hợp đồng / phụ lục / văn bản</label>
+        <input type="text" id="fTen" value="${escapeHtml(v.tenVanBan)}" placeholder="VD: HĐ dịch vụ bảo vệ...">
+        <span class="field-error" id="fTenErr" style="display:none;">Nhập tên văn bản</span>
+      </div>
+      <div class="field"><label>Người tạo</label><input type="text" id="fNguoiTao" value="${escapeHtml(v.nguoiTao)}"></div>
+      <div class="field"><label>Người phụ trách</label><select id="fNguoiPT">${personOptions(v.nguoiPhuTrach)}</select></div>
+      <div class="field"><label>Ngày tạo</label><input type="date" id="fNgayTao" value="${v.ngayTao}"></div>
+      <div class="field">
+        <label>Hạn xử lý</label>
+        <input type="date" id="fHan" value="${v.hanXuLy}">
+        <span class="field-hint">Mặc định Ngày tạo + 2, có thể sửa</span>
+      </div>
+      <div class="field full"><label>Tiến trình</label><select id="fTienTrinh">${progressOptionsAll(v.tienTrinh)}</select></div>
+      <div class="field full"><label>Link Base</label><input type="text" id="fLink" value="${escapeHtml(v.linkBase)}" placeholder="https://base.vn/..."></div>
+      <div class="field full"><label>Ghi chú</label><textarea id="fGhiChu">${escapeHtml(v.ghiChu)}</textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="mCancel">Hủy</button>
+      <button class="btn btn-primary" id="mSave">${isEdit?'Lưu thay đổi':'Thêm hồ sơ'}</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+
+  const fNgayTao = overlay.querySelector('#fNgayTao');
+  const fHan = overlay.querySelector('#fHan');
+  let hanTouched = !!v.hanXuLy;
+  if(!isEdit) fHan.value = addDays(fNgayTao.value, 2);
+  fNgayTao.onchange = () => { if(!hanTouched) fHan.value = addDays(fNgayTao.value, 2); };
+  fHan.oninput = () => { hanTouched = true; };
+
+  const close = () => overlay.remove();
+  overlay.querySelector('#mClose').onclick = close;
+  overlay.querySelector('#mCancel').onclick = close;
+  overlay.onclick = (e) => { if(e.target === overlay) close(); };
+
+  overlay.querySelector('#mSave').onclick = async () => {
+    const ten = overlay.querySelector('#fTen').value.trim();
+    if(!ten){
+      overlay.querySelector('#fTenErr').style.display = 'inline';
+      overlay.querySelector('#fTen').focus();
+      return;
+    }
+    const data = {
+      donVi: overlay.querySelector('#fDonVi').value,
+      loaiVanBan: overlay.querySelector('#fLoai').value,
+      tenVanBan: ten,
+      nguoiTao: overlay.querySelector('#fNguoiTao').value.trim(),
+      nguoiPhuTrach: overlay.querySelector('#fNguoiPT').value,
+      ngayTao: overlay.querySelector('#fNgayTao').value,
+      hanXuLy: overlay.querySelector('#fHan').value,
+      tienTrinh: overlay.querySelector('#fTienTrinh').value,
+      linkBase: overlay.querySelector('#fLink').value.trim(),
+      ghiChu: overlay.querySelector('#fGhiChu').value.trim()
+    };
+    if(isEdit){
+      Object.assign(rec, data);
+    }else{
+      records.push({ id: uid(), ...data });
+    }
+    await saveRecords();
+    close();
+    renderAll();
+    showToast(isEdit ? 'Đã lưu thay đổi' : 'Đã thêm hồ sơ mới');
+  };
+}
+
+/* ---------- Settings modal (Danh muc) ---------- */
+function openSettingsModal(){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `<div class="modal" style="max-width:480px;">
+    <div class="modal-head">
+      <h2>Quản lý danh mục</h2>
+      <button class="close-x" id="sClose" aria-label="Đóng"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" style="grid-template-columns:1fr;">
+      <div class="settings-section">
+        <h3>Đơn vị</h3>
+        <p>Danh sách công ty dùng cho bộ lọc và biểu mẫu thêm hồ sơ.</p>
+        <div class="taglist" id="tagsDonVi"></div>
+        <div class="add-tag-row"><input type="text" id="newDonVi" placeholder="Thêm đơn vị mới"><button class="btn btn-ghost" id="addDonVi">Thêm</button></div>
+      </div>
+      <div class="settings-section">
+        <h3>Người phụ trách</h3>
+        <p>Danh sách nhân sự trong team pháp chế.</p>
+        <div class="taglist" id="tagsNguoi"></div>
+        <div class="add-tag-row"><input type="text" id="newNguoi" placeholder="Thêm người phụ trách"><button class="btn btn-ghost" id="addNguoi">Thêm</button></div>
+      </div>
+      <div class="settings-section">
+        <h3>Các bước tiến trình</h3>
+        <p>Thứ tự xử lý hồ sơ, dùng cho cột Tiến trình.</p>
+        <div class="taglist" id="tagsTT"></div>
+        <div class="add-tag-row"><input type="text" id="newTT" placeholder="Thêm bước tiến trình"><button class="btn btn-ghost" id="addTT">Thêm</button></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" id="sDone">Xong</button></div>
+  </div>`;
+  document.body.appendChild(overlay);
+
+  function renderTags(){
+    overlay.querySelector('#tagsDonVi').innerHTML = danhMuc.donVi.map((u,i) =>
+      `<span class="tag">${escapeHtml(u)}<button data-list="donVi" data-i="${i}" aria-label="Xóa"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`).join('');
+    overlay.querySelector('#tagsNguoi').innerHTML = danhMuc.nguoi.map((u,i) =>
+      `<span class="tag">${escapeHtml(u)}<button data-list="nguoi" data-i="${i}" aria-label="Xóa"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`).join('');
+    overlay.querySelector('#tagsTT').innerHTML = danhMuc.tienTrinh.map((u,i) =>
+      `<span class="tag">${escapeHtml(u)}<button data-list="tienTrinh" data-i="${i}" aria-label="Xóa"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span>`).join('');
+    overlay.querySelectorAll('[data-list]').forEach(b => {
+      b.onclick = async () => {
+        danhMuc[b.dataset.list].splice(Number(b.dataset.i), 1);
+        await saveDanhMuc();
+        renderTags();
+        renderAll();
+      };
+    });
+  }
+  renderTags();
+
+  function bindAdd(inputId, btnId, listKey){
+    overlay.querySelector('#' + btnId).onclick = async () => {
+      const input = overlay.querySelector('#' + inputId);
+      const val = input.value.trim();
+      if(!val) return;
+      if(danhMuc[listKey].includes(val)){ input.value=''; return; }
+      danhMuc[listKey].push(val);
+      input.value = '';
+      await saveDanhMuc();
+      renderTags();
+      renderAll();
+    };
+  }
+  bindAdd('newDonVi','addDonVi','donVi');
+  bindAdd('newNguoi','addNguoi','nguoi');
+  bindAdd('newTT','addTT','tienTrinh');
+
+  const close = () => overlay.remove();
+  overlay.querySelector('#sClose').onclick = close;
+  overlay.querySelector('#sDone').onclick = close;
+  overlay.onclick = (e) => { if(e.target === overlay) close(); };
+}
+
+document.getElementById('btnAdd').onclick = openAddModal;
+document.getElementById('btnSettings').onclick = openSettingsModal;
+document.getElementById('searchBox').oninput = (e) => { searchTerm = e.target.value; renderAll(); };
+
+(async function init(){
+  await loadData();
+  renderAll();
+})();
+</script>
+</body>
+</html>
